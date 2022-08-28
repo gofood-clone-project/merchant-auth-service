@@ -9,6 +9,18 @@ jobs:
 
   continuous-integration:
     runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:14-alpine
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: auth
+        ports:
+          - 5432:5432
+        options: --name postgres
+
     steps:
     - uses: actions/checkout@v2
 
@@ -23,8 +35,14 @@ jobs:
     - name: Install golint
       run: go install golang.org/x/lint/golint@latest
 
-    - name: Verify Dependencies
+    - name: Install goose migration
+      run: go install github.com/pressly/goose/v3/cmd/goose@latest
+
+    - name: Verify dependencies
       run: go mod verify
+
+    - name: Run database migration
+      run: make migration-up
 
     - name: Run go build
       run: make build
